@@ -1,0 +1,188 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      - API_URL=https://api.yourdomain.com
+    depends_on:
+      - api-gateway
+    networks:
+      - health_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+  api-gateway:
+    container_name: api-gateway
+    build: 
+      context: ./api-gateway
+    restart: always
+    environment:
+      - APP_NAME=HealthCareAPI
+      - NODE_ENV=production
+      - SERVER_PORT=3000
+      - DATABASE_HOST=${DATABASE_HOST:-postgres}
+      - DATABASE_USERNAME=${DATABASE_USERNAME:-postgres}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=gateway_db
+      - USER_SERVICE_HOST=user-service
+      - USER_SERVICE_PORT=50051
+      - AUTH_SERVICE_HOST=auth-service
+      - AUTH_SERVICE_PORT=50051
+      - DOCTOR_SERVICE_HOST=doctor-service
+      - DOCTOR_SERVICE_PORT=50051
+      - APPOINTMENT_SERVICE_HOST=appointment-service
+      - APPOINTMENT_SERVICE_PORT=50051
+      - LOG_LEVEL=info
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://app.yourdomain.com}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - user-service
+      - auth-service
+      - doctor-service
+      - appointment-service
+    networks: 
+      - health_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  auth-service:
+    build:
+      context: ./auth-service
+    restart: always
+    environment:
+      - DATABASE_HOST=${DATABASE_HOST:-postgres}
+      - DATABASE_USERNAME=${DATABASE_USERNAME:-postgres}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=auth_db
+      - NODE_ENV=production
+      - GRPC_SERVER_PORT=50051
+      - DYNAMO_ENDPOINT=${DYNAMO_ENDPOINT:-http://dynamodb:8000}
+      - DYNAMO_AWS_REGION=${DYNAMO_AWS_REGION:-us-east-1}
+      - DYNAMO_AWS_ACCESS_KEY_ID=${DYNAMO_AWS_ACCESS_KEY_ID}
+      - DYNAMO_AWS_SECRET_ACCESS_KEY=${DYNAMO_AWS_SECRET_ACCESS_KEY}
+      - USER_SERVICE_HOST=user-service
+      - USER_SERVICE_PORT=50051
+      - SESSION_DURATION=3600000
+      - LOG_LEVEL=info
+    ports:
+      - "50051"
+    depends_on:
+      - postgres
+      - user-service
+    networks: 
+      - health_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - DATABASE_HOST=${DATABASE_HOST:-postgres}
+      - DATABASE_USERNAME=${DATABASE_USERNAME:-postgres}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=user_db
+      - NODE_ENV=production
+      - GRPC_SERVER_PORT=50051
+      - LOG_LEVEL=info
+    ports:
+      - "50051"
+    depends_on:
+      - postgres
+    networks: 
+      - health_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  doctor-service:
+    build:
+      context: ./doctor-service
+    restart: always
+    environment:
+      - DATABASE_HOST=${DATABASE_HOST:-postgres}
+      - DATABASE_USERNAME=${DATABASE_USERNAME:-postgres}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=doctor_db
+      - NODE_ENV=production
+      - GRPC_SERVER_PORT=50051
+      - LOG_LEVEL=info
+    ports:
+      - "50051"
+    depends_on:
+      - postgres
+    networks: 
+      - health_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  appointment-service:
+    build:
+      context: ./appointment-service
+      dockerfile: Dockerfile
+    restart: always
+    working_dir: /app
+    environment:
+      - DATABASE_HOST=${DATABASE_HOST:-postgres}
+      - DATABASE_USERNAME=${DATABASE_USERNAME:-postgres}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=appointment_db
+      - NODE_ENV=production
+      - GRPC_SERVER_PORT=50051
+      - DOCTOR_SERVICE_HOST=doctor-service
+      - DOCTOR_SERVICE_PORT=50051
+      - LOG_LEVEL=info
+    ports:
+      - "50051"
+    depends_on:
+      - postgres
+    networks: 
+      - health_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  dynamodb:
+    image: amazon/dynamodb-local
+    container_name: dynamodb
+    restart: always
+    networks:
+      - health_network
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-inMemory"]
+    ports:
+      - "8000:8000"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  health_network:
+    driver: bridge
