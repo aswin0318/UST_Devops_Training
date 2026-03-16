@@ -20,10 +20,19 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: aswin018/student-frontend:v1
+          image: rnld101/3tier-nodejs:frontend
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
           envFrom:
-                - configMapRef:
-                    name: frontend-configmap
+            - configMapRef:
+                name: frontend-configmap
 
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+       volumes:
+         - name: nginx-config
+             configMap:
+               name: frontend-nginx-conf
