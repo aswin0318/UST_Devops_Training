@@ -1,0 +1,40 @@
+services:
+  backend:
+    build: ./mern/backend
+    ports:
+      - "5050:5050"
+    networks:
+      - demo
+    environment:
+      MONGO_URI: mongodb://mongodb:27017/employees
+    depends_on:
+      - mongodb
+
+  frontend:
+    build: ./mern/frontend
+    ports:
+      - "5173:5173"
+    networks:
+      - demo
+    environment:
+      REACT_APP_API_URL: http://backend:5050
+    depends_on:
+      - backend
+
+  mongodb:
+    image: mongo:7.0
+    expose:
+      - "27017"
+    networks:
+      - demo
+    volumes:
+      - mongo-data:/data/db
+
+
+networks:
+  demo:
+    driver: bridge
+
+volumes:
+  mongo-data:
+    driver: local
