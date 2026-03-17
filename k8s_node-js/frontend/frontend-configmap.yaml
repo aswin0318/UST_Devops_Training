@@ -3,4 +3,4 @@ kind: ConfigMap
 metadata:
   name: frontend-configmap
 data:
-  VITE_API_URL: "http://backend:3000/api"
+  VITE_API_URL: "http://backend-svc:3000/api"
