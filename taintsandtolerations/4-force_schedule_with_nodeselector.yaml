@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: forced-pod
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: ip-172-31-29-141 
+  containers:
+  - name: nginx
+    image: nginx
+  tolerations:
+  - key: "devops"
+    operator: "Equal"
+    value: "true"
+    effect: "NoSchedule"

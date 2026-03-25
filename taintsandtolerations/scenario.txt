@@ -1,0 +1,12 @@
+
+CASE 1: No Taint + No nodeSelector ------ no special, pod can go anywhere
+CASE 2: No Taint + nodeSelector    ------ pod only goes to matching node
+CASE 3: Taint (NoSchedule) + No toleration -------- node is ignored
+CASE 4: Taint (NoSchedule) + Toleration ------- node is eligible but no guarantee
+CASE 5: Taint + nodeSelector (NO toleration) -------- pod fail
+CASE 6: Taint + nodeSelector + toleration ----- guranteed scheduling to pod to node
+CASE 7: NoExecute + No toleration ----- new pod block and existing pod evict
+CASE 8: NoExecute + tolerationSeconds  ------- temporary pod allocate
+CASE 9: Multiple Taints + Partial toleration  --------- pod fail
+CASE 10: Toleration without mentioning effect ------ scheduled normally
+

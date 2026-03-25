@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: master-only-pod
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: master
+  containers:
+  - name: nginx
+    image: nginx
+  tolerations:
+  - key: "master"
+    operator: "Equal"
+    value: "assign"
+    effect: "NoSchedule"

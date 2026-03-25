@@ -1,0 +1,3 @@
+kubectl run testpod --image=nginx
+kubectl run testpod2 --image=ubuntu
+
